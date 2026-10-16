@@ -737,6 +737,9 @@ function showSceneImg(node,cb){
 function choose(c){
   playClick();
   ATTRS.forEach(a=>{if(c.effects&&c.effects[a.key])state.attrs[a.key]+=c.effects[a.key];});
+  const ef=c.effects||{};const pos=(Math.max(ef.care||0,0)+Math.max(ef.prin||0,0)+Math.max(ef.amb||0,0));
+  const neg=(Math.max(-(ef.care||0),0)+Math.max(-(ef.prin||0),0)+Math.max(-(ef.amb||0),0)+Math.max(-(ef.mind||0),0));
+  state.lastGood=!c.violation&&pos>neg;
   if(c.violation&&state.violations.indexOf(c.violation)<0){state.violations.push(c.violation);showVioToast(c.violation);}
   if(c.route)state.route=c.route;
   state.steps++;state.log.push(c.tag||c.label);
@@ -757,8 +760,9 @@ function showFeedback(){
   let tag="本周评价",t="主任的批注",msg="",warn="";
   if(isLast){tag="退休评定";t="这一生，你站到了评定面前";msg="教务主任把评定表递到你面前：“{name}老师，这一路你走得如何，大家心里有数。让我们看看，你的名字最终会写在哪一行。”";warn="";card.className="feedback-card";}
   else if(a.mind<=4){tag="心力预警";t="你有点撑不住了";msg="教务主任把你叫到办公室：“{name}老师，听说你最近天天加班？身体是本钱，别把自己熬坏了。”";warn="心力过低，再这样下去你撑不到期末。";card.className="feedback-card risk";}
-  else if(s>=22){tag="表现良好";t="主任难得点了点头";msg="“这个阶段处理得还算体面。继续保持，学校看得出你的用心。”";card.className="feedback-card";}
-  else if(s>=13){tag="中规中矩";t="主任没多说什么";msg="“嗯，按部就班。不过，评职称是要看成绩和师德的，你自己掂量。”";card.className="feedback-card";}
+  else if(state.lastGood){tag="表现良好";t="主任难得点了点头";msg="“这个阶段处理得不错，看得出你在用心。孩子们都记在心里，这就够了。”";card.className="feedback-card";}
+  else if(s>=18){tag="表现出色";t="主任赞不绝口";msg="“这个阶段干得漂亮，大家有目共睹。这股劲儿，就该用在教学上。”";card.className="feedback-card";}
+  else if(s>=13){tag="稳步向前";t="主任微微点头";msg="“还不错，一步一个脚印。保持下去，别松劲儿。”";card.className="feedback-card";}
   else{tag="点名敲打";t="主任敲了敲桌子";msg="“{name}老师，这些年来你的表现可不算出彩。再这样下去，退休前的评定、甚至去留，都不好说。”";warn="你的职场评价正在走低，请谨慎做出每个选择。";card.className="feedback-card alert";}
   document.getElementById("fb-tag").textContent=tag;
   document.getElementById("fb-title").textContent=t;
