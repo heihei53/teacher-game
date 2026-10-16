@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>教师模拟器 · 一位教师的职业生涯</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='2' y='3' width='20' height='18' rx='2' fill='%232a4436'/%3E%3Cpath d='M5 7h14M5 11h9M5 15h11' stroke='%23e0a458' stroke-width='1.4' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='15.5' r='2.2' fill='%23f2ede2'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://miaoda.feishu.cn">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
+<style>
+/* ============================================================
+   《教师模拟器》 · 主题：黑板与教案 · ruleset teacher-sim v2.1
+============================================================ */
+:root{
+  --ink-0:#16281f;--ink-1:#1c3327;--ink-2:#244033;--ink-3:#2f4f3e;
+  --chalk:#f4efe4;--chalk-dim:#cdd8cd;
+  --amber:#e0a458;--amber-soft:#8f6a35;
+  --rust:#c96f4a;--paper:#efe7d6;--paper-2:#e6dcc6;
+  --text-ink:#2b2a22;--panel:rgba(0,0,0,.26);
+  --shadow:0 14px 40px rgba(0,0,0,.45);
+  --serif:"Noto Serif SC","Songti SC","STSong","SimSun",serif;
+  --sans:"Noto Sans SC","Microsoft YaHei","PingFang SC",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--sans);color:var(--chalk);line-height:1.9;overflow-x:hidden;
+  background:radial-gradient(120% 90% at 50% 0%, var(--ink-2) 0%, var(--ink-1) 46%, var(--ink-0) 100%);
+  background-attachment:fixed;-webkit-font-smoothing:antialiased;
+}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:radial-gradient(rgba(244,239,228,.045) 1px,transparent 1.6px);background-size:7px 7px;}
+#app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
+.view{display:none;flex:1;flex-direction:column;min-height:100vh;animation:fadeIn .5s ease both}
+.view.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ===== 标题屏 ===== */
+#view-title{justify-content:center;align-items:center;padding:32px 20px;text-align:center}
+.board{position:relative;width:min(880px,100%);padding:52px 34px 44px;
+  background:linear-gradient(160deg,var(--ink-2),var(--ink-1) 55%,#173125);
+  border:1px solid rgba(244,239,228,.14);border-radius:14px;
+  box-shadow:var(--shadow),inset 0 0 0 10px rgba(0,0,0,.16);}
+.board::after{content:"";position:absolute;left:6%;right:6%;bottom:-2px;height:26px;
+  background:linear-gradient(180deg,#3a5a46,#223a2e);border-radius:0 0 12px 12px;box-shadow:0 6px 12px rgba(0,0,0,.4);}
+.kicker{font-family:var(--sans);font-size:13px;letter-spacing:.5em;color:var(--chalk-dim);margin-bottom:24px}
+.title{font-family:var(--serif);font-weight:900;font-size:clamp(52px,8vw,84px);letter-spacing:.08em;color:var(--chalk);
+  text-shadow:0 2px 0 rgba(0,0,0,.3),0 0 22px rgba(224,164,88,.18);line-height:1.15;}
+.title .dot{color:var(--amber)}
+.subtitle{margin-top:18px;font-family:var(--serif);font-weight:600;font-size:clamp(15px,2.4vw,19px);color:var(--chalk-dim);letter-spacing:.14em}
+.title-line{width:78px;height:3px;background:var(--amber);margin:24px auto;border-radius:2px}
+.tagline{max-width:560px;margin:0 auto;color:var(--chalk-dim);font-size:14px;letter-spacing:.04em}
+.start-btn{margin:30px auto 6px;display:inline-block;font-family:var(--serif);font-weight:700;font-size:18px;letter-spacing:.18em;
+  color:var(--ink-0);background:var(--amber);padding:14px 46px;border:none;border-radius:50px;cursor:pointer;
+  box-shadow:0 8px 22px rgba(224,164,88,.3);transition:transform .18s ease,box-shadow .18s ease;}
+.start-btn:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(224,164,88,.42)}
+.start-hint{margin-top:14px;font-size:12px;color:var(--chalk-dim);opacity:.72;letter-spacing:.06em}
+
+/* ===== 沉浸氛围：粉笔书写浮现 + 顶部光晕 ===== */
+.board::before{content:"";position:absolute;top:0;left:8%;right:8%;height:130px;pointer-events:none;
+  background:radial-gradient(62% 100% at 50% 0%,rgba(224,164,88,.12),transparent 72%);}
+.title{animation:chalkDraw 1.1s .1s ease both}
+.title-line{animation:fadeIn .8s .75s ease both}
+.kicker,.subtitle,.tagline{animation:fadeIn .9s .3s ease both}
+@keyframes chalkDraw{from{opacity:0;filter:blur(9px);transform:translateY(7px)}to{opacity:1;filter:none;transform:none}}
+@media(prefers-reduced-motion:reduce){.title,.title-line,.kicker,.subtitle,.tagline{animation:none}}
+
+/* ===== 强剧情图片过场 ===== */
+.scene-img{position:fixed;inset:0;z-index:55;display:none;align-items:center;justify-content:center;flex-direction:column;
+  background:radial-gradient(120% 100% at 50% 20%,#1a2c23,#0e1812 75%);padding:24px}
+.scene-img.show{display:flex;animation:fadeIn .4s ease both}
+.scene-img img{max-width:min(720px,94%);max-height:68vh;border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.55);object-fit:contain;border:1px solid rgba(244,239,228,.12)}
+.scene-img-cap{text-align:center;margin-top:20px}
+.sic-ch{font-family:var(--sans);font-size:12.5px;color:var(--amber);letter-spacing:.34em;margin-bottom:8px}
+.sic-title{font-family:var(--serif);font-weight:700;font-size:clamp(19px,4vw,26px);color:var(--chalk);letter-spacing:.08em}
+.scene-img-tip{margin-top:22px;font-size:11.5px;color:var(--chalk-dim);opacity:.7;letter-spacing:.2em;animation:blink 1.6s ease infinite}
+@media(prefers-reduced-motion:reduce){.scene-img.show{animation:none}.scene-img-tip{animation:none}}
+/* 场景图资产声明：供发布链路静态扫描打包（运行时由 JS 按同路径引用） */
+.scene-assets{display:none;background-image:url('assets/yuwen.jpg'),url('assets/shuxue.jpg'),url('assets/meishu.jpg'),url('assets/tuiwu.jpg'),url('assets/speech.jpg'),url('assets/meishu-final.jpg'),url('assets/bgm-calm.wav'),url('assets/bgm-tension.wav'),url('assets/bgm-sad.wav'),url('assets/bgm-glory.wav'),url('assets/bgm-8bit.wav')}
+
+.name-field{margin:26px auto 0;max-width:360px}
+.name-field label{display:block;font-family:var(--serif);font-size:13px;color:var(--chalk-dim);letter-spacing:.25em;margin-bottom:10px}
+.name-field input{width:100%;text-align:center;background:rgba(0,0,0,.2);border:1px solid rgba(244,239,228,.28);
+  color:var(--chalk);font-family:var(--serif);font-size:22px;font-weight:600;letter-spacing:.1em;padding:12px 8px;border-radius:10px;outline:none;transition:border-color .15s;}
+.name-field input:focus{border-color:var(--amber)}
+.name-field input::placeholder{color:rgba(205,216,205,.5);font-weight:400}
+.name-field small{display:block;margin-top:8px;font-size:11.5px;color:var(--chalk-dim);opacity:.8;letter-spacing:.04em}
+
+/* 科目选择 */
+.subject-field{margin:30px auto 4px;max-width:520px}
+.subject-field label{display:block;font-family:var(--serif);font-size:13px;color:var(--chalk-dim);letter-spacing:.25em;margin-bottom:12px}
+.subject-options{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.opt{cursor:pointer;border:1px solid rgba(244,239,228,.22);background:rgba(0,0,0,.16);color:var(--chalk-dim);
+  font-family:var(--serif);font-size:15px;letter-spacing:.14em;padding:12px 6px;border-radius:10px;transition:all .15s;}
+.opt:hover{border-color:var(--amber);color:var(--chalk)}
+.opt.active{background:var(--amber);color:var(--ink-0);border-color:var(--amber);font-weight:700;box-shadow:0 6px 16px rgba(224,164,88,.3)}
+.subject-field small{display:block;margin-top:10px;font-size:11.5px;color:var(--chalk-dim);opacity:.82;letter-spacing:.04em;min-height:1.2em}
+.teacher-portrait{text-align:center;margin-bottom:14px}
+.portrait{width:min(180px,86%);aspect-ratio:3/4;object-fit:cover;border-radius:14px;border:1px solid rgba(244,239,228,.25);box-shadow:0 10px 30px rgba(0,0,0,.4);display:none}
+.portrait.show{display:inline-block}
+
+/* 音乐 / 手记按钮 */
+.btn-music,.btn-notebook{background:transparent;border:1px solid rgba(244,239,228,.25);color:var(--chalk-dim);
+  width:44px;height:44px;min-width:44px;min-height:44px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .15s,color .15s,background .15s;}
+.btn-music:hover,.btn-notebook:hover{color:var(--amber);border-color:var(--amber)}
+.btn-music svg,.btn-notebook svg{width:19px;height:19px}
+.btn-music .ic-off{display:none}.btn-music.muted .ic-on{display:none}.btn-music.muted .ic-off{display:block}
+.board .btn-music{position:absolute;top:16px;right:16px}
+.hud-right{display:flex;gap:10px;align-items:center}
+
+/* ===== 游戏屏 ===== */
+#view-game{max-width:860px;margin:0 auto;width:100%;padding:26px 20px 60px}
+.hud{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.scene-label{font-family:var(--serif);font-weight:700;color:var(--amber);font-size:15px;letter-spacing:.12em}
+.scene-label small{display:block;font-family:var(--sans);font-weight:400;font-size:11.5px;color:var(--chalk-dim);letter-spacing:.3em;margin-top:2px}
+.week-progress{flex:1;max-width:210px;margin:0 16px}
+.wp-track{height:6px;background:rgba(244,239,228,.14);border-radius:4px;overflow:hidden}
+.wp-fill{height:100%;background:linear-gradient(90deg,var(--amber),#f0cd8a);border-radius:4px;transition:width .4s ease}
+.wp-txt{font-size:11px;color:var(--chalk-dim);letter-spacing:.14em;text-align:center;margin-top:5px}
+
+.paper{position:relative;background:linear-gradient(180deg,var(--paper) 0%,var(--paper-2) 100%);
+  color:var(--text-ink);border-radius:6px;box-shadow:var(--shadow);padding:34px 34px 22px;border-top:3px solid var(--amber);}
+.paper::after{content:"";position:absolute;left:34px;right:34px;top:0;bottom:0;pointer-events:none;opacity:.5;
+  background-image:repeating-linear-gradient(180deg,transparent 0,transparent 33px,rgba(120,104,70,.18) 33px,rgba(120,104,70,.18) 34px);}
+.scene-title{font-family:var(--serif);font-weight:700;font-size:22px;color:#3a3a30;letter-spacing:.04em;margin-bottom:6px}
+.scene-para{font-family:var(--serif);font-size:17.5px;color:var(--text-ink);line-height:2.05;min-height:120px;white-space:pre-line}
+.scene-para .hl{background:linear-gradient(180deg,transparent 62%,rgba(224,164,88,.42) 62%)}
+.scene-para .em{color:#8a4a32;font-weight:600}
+.scene-para .cursor{display:inline-block;width:2px;height:1em;background:var(--amber);vertical-align:-2px;animation:blink .8s step-end infinite;margin-left:2px}
+@keyframes blink{50%{opacity:0}}
+.tap-hint{text-align:right;font-size:11.5px;color:var(--chalk-dim);letter-spacing:.2em;margin-top:8px;opacity:.8}
+
+.choices{margin-top:24px;display:flex;flex-direction:column;gap:13px}
+.choice{position:relative;text-align:left;cursor:pointer;border:none;font-family:var(--serif);font-size:16px;line-height:1.75;
+  color:var(--chalk);background:var(--panel);border:1px solid rgba(244,239,228,.16);border-radius:10px;padding:16px 18px 16px 46px;
+  transition:border-color .16s,background .16s,transform .12s;}
+.choice .idx{position:absolute;left:16px;top:50%;transform:translateY(-50%);width:22px;height:22px;border:1.5px solid var(--amber);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--amber);letter-spacing:0;}
+.choice:hover{border-color:var(--amber);background:rgba(224,164,88,.10);transform:translateX(4px)}
+.choice small{display:block;font-family:var(--sans);font-size:12px;color:var(--chalk-dim);opacity:.85;margin-top:3px;letter-spacing:.03em}
+
+/* 属性手记 */
+.notebook-panel{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(10,18,14,.66);padding:20px}
+.notebook-panel.open{display:flex}
+.notebook-card{width:min(430px,100%);background:var(--paper);color:var(--text-ink);border-radius:10px;border-top:3px solid var(--amber);
+  box-shadow:var(--shadow);padding:26px 28px;animation:pop .22s ease both}
+@keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.notebook-card h3{font-family:var(--serif);font-size:20px;margin-bottom:4px}
+.notebook-card .cap{font-size:12.5px;color:#7a6f56;margin-bottom:20px;letter-spacing:.04em}
+.tabs{display:flex;gap:8px;margin:14px 0 16px}
+.tab{flex:1;padding:9px;border:none;border-radius:8px;background:rgba(120,104,70,.14);color:#6a5f45;cursor:pointer;font-size:13.5px;letter-spacing:.06em;font-family:var(--serif);font-weight:600;transition:all .15s}
+.tab:hover{background:rgba(120,104,70,.22)}
+.tab.active{background:var(--ink-1);color:var(--chalk)}
+.student-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.student-card{background:rgba(120,104,70,.10);border:1px solid rgba(120,104,70,.2);border-radius:8px;padding:11px 13px}
+.st-name{font-family:var(--serif);font-weight:700;font-size:15.5px;color:#3a3a30}
+.st-tag{display:inline-block;margin:5px 0 4px;font-size:10.5px;color:#8a4a32;letter-spacing:.04em;background:rgba(201,111,74,.12);padding:2px 8px;border-radius:30px}
+.st-desc{font-size:11.5px;line-height:1.6;color:#6a5f45}
+.vio-note{margin:2px 0 12px;background:rgba(124,36,36,.12);border:1px solid rgba(124,36,36,.35);color:#8a2626;
+  border-radius:8px;padding:9px 12px;font-size:12px;line-height:1.6;letter-spacing:.02em}
+
+/* 师德红线 toast */
+.vio-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(30px);z-index:80;
+  background:#7c2424;color:#f7e9e2;border:1px solid rgba(255,255,255,.22);border-radius:10px;
+  padding:14px 18px;font-size:13.5px;line-height:1.7;box-shadow:0 12px 34px rgba(0,0,0,.55);
+  opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;max-width:min(460px,90vw);text-align:center}
+.vio-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.vio-toast b{color:#ffd9a0}
+.attr-row{display:flex;align-items:center;gap:12px;margin-bottom:15px}
+.attr-name{width:54px;font-family:var(--serif);font-weight:600;font-size:14.5px;flex-shrink:0}
+.attr-bar{flex:1;height:9px;background:rgba(120,104,70,.2);border-radius:6px;overflow:hidden}
+.attr-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--amber),#eec177);transition:width .5s ease}
+.attr-val{width:34px;text-align:right;font-size:13px;font-weight:700;color:#5c5236;font-variant-numeric:tabular-nums}
+.notebook-close{margin-top:6px;width:100%;padding:10px;border:none;border-radius:8px;background:var(--ink-1);color:var(--chalk);cursor:pointer;font-size:14px;letter-spacing:.15em}
+
+/* 周反馈弹层 */
+.feedback-panel{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(10,18,14,.72);padding:20px}
+.feedback-panel.open{display:flex}
+.feedback-card{width:min(460px,100%);background:var(--paper);color:var(--text-ink);border-radius:10px;border-top:3px solid var(--amber);
+  box-shadow:var(--shadow);padding:26px 28px;animation:pop .22s ease both}
+.fb-tag{display:inline-block;font-size:11px;letter-spacing:.3em;color:var(--rust);border:1px solid rgba(201,111,74,.5);border-radius:50px;padding:4px 14px;margin-bottom:14px}
+.feedback-card.alert .fb-tag{color:var(--rust);border-color:var(--rust)}
+.feedback-card.risk .fb-tag{color:#a33;border-color:#a33;background:rgba(163,51,51,.08)}
+.fb-title{font-family:var(--serif);font-weight:700;font-size:19px;margin-bottom:8px}
+.fb-msg{font-family:var(--serif);font-size:15.5px;line-height:1.9;color:#3a3a30;white-space:pre-line}
+.fb-warn{margin-top:12px;font-size:13px;color:var(--rust);letter-spacing:.03em}
+.fb-next{margin-top:18px;width:100%;padding:11px;border:none;border-radius:8px;background:var(--ink-1);color:var(--chalk);cursor:pointer;font-size:14px;letter-spacing:.15em}
+
+/* ===== 结局屏 ===== */
+#view-end{justify-content:center;align-items:center;padding:40px 20px}
+.end-card{width:min(760px,100%);text-align:center}
+.end-badge{display:inline-block;font-family:var(--sans);font-size:12px;letter-spacing:.4em;color:var(--amber);
+  border:1px solid rgba(224,164,88,.4);border-radius:50px;padding:7px 22px;margin-bottom:26px}
+.end-badge.bad{color:var(--rust);border-color:var(--rust)}
+.end-title{font-family:var(--serif);font-weight:900;font-size:clamp(30px,5.4vw,46px);letter-spacing:.06em;color:var(--chalk);line-height:1.3;text-shadow:0 2px 0 rgba(0,0,0,.3)}
+.end-title .dot{color:var(--amber)}
+.end-paper{text-align:left;margin:28px 0}
+.end-paper .scene-para{min-height:0}
+.end-stats{margin-top:26px;text-align:left;background:var(--panel);border:1px solid rgba(244,239,228,.14);border-radius:12px;padding:24px 26px}
+.end-stats h4{font-family:var(--serif);font-weight:700;font-size:17px;color:var(--amber);letter-spacing:.1em;margin-bottom:18px}
+.stat-row{display:flex;align-items:center;gap:12px;margin-bottom:13px}
+.stat-row .attr-name{color:var(--chalk);width:54px}
+.stat-row .attr-val{color:var(--chalk);width:34px;text-align:right}
+.stat-row .attr-bar{background:rgba(244,239,228,.12)}
+.stat-row .attr-fill{background:linear-gradient(90deg,var(--amber),#f0cd8a)}
+.end-note{margin-top:18px;font-size:13px;color:var(--chalk-dim);letter-spacing:.04em;line-height:1.8}
+.end-vio{margin-bottom:14px;background:rgba(201,111,74,.16);border:1px solid rgba(201,111,74,.4);color:#e8c3ae;
+  border-radius:8px;padding:11px 14px;font-size:12.5px;line-height:1.9;letter-spacing:.02em;text-align:left}
+.end-vio b{color:var(--rust);font-weight:700}
+.end-actions{margin-top:26px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn{font-family:var(--serif);font-weight:700;font-size:15px;letter-spacing:.12em;border:none;cursor:pointer;border-radius:50px;padding:13px 32px;transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn-primary{color:var(--ink-0);background:var(--amber);box-shadow:0 8px 20px rgba(224,164,88,.3)}
+.btn-ghost{color:var(--chalk);background:transparent;border:1px solid rgba(244,239,228,.3)}
+.btn-ghost:hover{border-color:var(--chalk)}
+.footer{margin-top:auto;text-align:center;padding:20px;font-size:11.5px;color:var(--chalk-dim);opacity:.6;letter-spacing:.08em}
+
+@media (max-width:640px){
+  .paper{padding:26px 20px 18px}.paper::after{left:20px;right:20px}
+  .scene-para{font-size:16px}.choice{font-size:15px;padding:14px 14px 14px 40px}
+  .board{padding:40px 22px 38px}.title{letter-spacing:.04em}
+  .subject-options{grid-template-columns:repeat(3,1fr);gap:8px}.opt{font-size:14px}
+  .week-progress{max-width:150px}
+  .student-grid{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="bgm">
+  <audio id="bgm-calm" src="assets/bgm-calm.wav" loop preload="auto"></audio>
+  <audio id="bgm-tension" src="assets/bgm-tension.wav" loop preload="auto"></audio>
+  <audio id="bgm-sad" src="assets/bgm-sad.wav" loop preload="auto"></audio>
+  <audio id="bgm-glory" src="assets/bgm-glory.wav" loop preload="auto"></audio>
+  <audio id="bgm-8bit" src="assets/bgm-8bit.wav" loop preload="auto"></audio>
+</div>
+<div id="app">
+
+  <!-- ===== 视图：标题屏 ===== -->
+  <section id="view-title" class="view active">
+    <div class="board">
+      <button class="btn-music" id="btn-music-title" title="背景音乐" aria-label="背景音乐">
+        <svg class="ic-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4h3l4 3V7L6 10H3z" fill="currentColor" stroke="none"/><path d="M13 8.5a4 4 0 0 1 0 7"/><path d="M15.5 6a7.5 7.5 0 0 1 0 12"/></svg>
+        <svg class="ic-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4h3l4 3V7L6 10H3z" fill="currentColor" stroke="none"/><path d="M15.5 9l5 6M20.5 9l-5 6"/></svg>
+      </button>
+      <div class="kicker">教师职场抉择 · 单人可玩</div>
+      <h1 class="title">教师模拟器</h1>
+      <div class="title-line"></div>
+      <div class="subtitle">一位教师的职业生涯</div>
+      <p class="tagline">你刚从师范学校毕业，入职到这所重点学校，要在这所学校站满九个阶段、整整四十五年。想评职称、想当校长，还是只想守住讲台的底线？每一步选择都有代价——退休那天，才见分晓。</p>
+      <div class="name-field">
+        <label for="player-name">你的名字</label>
+        <input id="player-name" maxlength="6" value="阿雨" placeholder="阿雨" autocomplete="off">
+        <small>故事里的昵称·可改成你的名字。</small>
+      </div>
+      <div class="subject-field">
+        <label>任教科目</label>
+        <div class="teacher-portrait">
+          <img class="portrait show" id="portrait-yuwen" src="assets/teacher-yuwen.jpg" alt="语文老师">
+          <img class="portrait" id="portrait-shuxue" src="assets/teacher-shuxue.jpg" alt="数学老师">
+          <img class="portrait" id="portrait-meishu" src="assets/teacher-meishu.jpg" alt="美术老师">
+        </div>
+        <div class="subject-options" id="subject-options"></div>
+        <small id="subject-desc">选择你想任教的科目</small>
+      </div>
+      <button class="start-btn" id="btn-start">走上讲台</button>
+      <div class="start-hint">九个阶段、反复权衡：你的每次选择，都会决定退休那天——是正高级、校长，还是被辞退的老师。</div>
+    </div>
+    <div class="footer">《教师模拟器》 · ruleset teacher-sim v2.1</div>
+  </section>
+
+  <!-- ===== 视图：游戏 ===== -->
+  <section id="view-game" class="view">
+    <div class="hud">
+      <div class="scene-label" id="scene-label"></div>
+      <div class="week-progress">
+        <div class="wp-track"><div class="wp-fill" id="wp-fill" style="width:20%"></div></div>
+        <div class="wp-txt" id="wp-txt">第 1 / 9 个阶段</div>
+      </div>
+      <div class="hud-right">
+        <button class="btn-music" id="btn-music-game" title="背景音乐" aria-label="背景音乐">
+          <svg class="ic-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4h3l4 3V7L6 10H3z" fill="currentColor" stroke="none"/><path d="M13 8.5a4 4 0 0 1 0 7"/><path d="M15.5 6a7.5 7.5 0 0 1 0 12"/></svg>
+          <svg class="ic-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4h3l4 3V7L6 10H3z" fill="currentColor" stroke="none"/><path d="M15.5 9l5 6M20.5 9l-5 6"/></svg>
+        </button>
+        <button class="btn-notebook" id="btn-notebook" title="打开教师手记（状态）" aria-label="教师手记">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 4h13a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3V4z"/><path d="M7 4v16"/><path d="M10 8h5M10 12h5"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="paper">
+      <div class="scene-title" id="scene-title"></div>
+      <div class="scene-para" id="scene-para"></div>
+      <div class="tap-hint" id="tap-hint">— 点击文本快进 · 你的选择决定职场走向 —</div>
+    </div>
+    <div class="choices" id="choices"></div>
+  </section>
+
+  <!-- ===== 视图：结局屏 ===== -->
+  <section id="view-end" class="view">
+    <div class="end-card">
+      <div class="end-badge" id="end-badge">结 局</div>
+      <h2 class="end-title" id="end-title"></h2>
+      <div class="paper end-paper"><div class="scene-para" id="end-para"></div></div>
+      <div class="end-stats">
+        <h4>学年结束 · 你的职场档案</h4>
+        <div id="end-stats"></div>
+        <div class="end-note" id="end-note"></div>
+      </div>
+      <div class="end-actions">
+        <button class="btn btn-primary" id="btn-restart">重新开始</button>
+        <button class="btn btn-ghost" id="btn-again">换个科目再试</button>
+      </div>
+    </div>
+    <div class="footer">《教师模拟器》 · teacher-sim v2.1</div>
+  </section>
+
+  <!-- 教师手记弹层 -->
+  <div class="notebook-panel" id="notebook-panel">
+    <div class="notebook-card">
+      <h3>教师手记</h3>
+      <div class="tabs">
+        <button class="tab active" id="tab-btn-state">我的状态</button>
+        <button class="tab" id="tab-btn-roster">学生档案</button>
+      </div>
+      <div id="vio-note"></div>
+      <div id="notebook-attrs"></div>
+      <div id="notebook-roster" style="display:none"></div>
+      <button class="notebook-close" id="btn-notebook-close">合上手记</button>
+    </div>
+  </div>
+
+  <!-- 周反馈弹层 -->
+  <div class="feedback-panel" id="feedback-panel">
+    <div class="feedback-card" id="feedback-card">
+      <div class="fb-tag" id="fb-tag">本阶段评价</div>
+      <div class="fb-title" id="fb-title"></div>
+      <div class="fb-msg" id="fb-msg"></div>
+      <div class="fb-warn" id="fb-warn"></div>
+      <button class="fb-next" id="btn-fb-next">继续</button>
+    </div>
+  </div>
+
+  <!-- 强剧情图片过场 -->
+  <div class="scene-img" id="scene-img">
+    <img id="scene-img-pic" alt="" draggable="false">
+    <div class="scene-img-cap" id="scene-img-cap"></div>
+    <div class="scene-img-tip">点击图片，继续</div>
+  </div>
+  <div class="scene-assets"></div>
+
+</div>
+
+<script>
+/* ============================================================
+   《教师模拟器》 v2.1 · ruleset teacher-sim-v2.1
+   玩法：选科目 → 每阶段教学困境 → 权衡抉择 → 职场结局
+============================================================ */
+const RULESET_ID = "teacher-sim-v2.1";
+const SAVE_KEY = "teacher-tale-save-v2";
+const ATTRS = [
+  {key:"care",name:"关怀",max:12},
+  {key:"prin",name:"原则",max:12},
+  {key:"amb", name:"进取",max:12},
+  {key:"mind",name:"心力",max:12,start:10}
+];
+
+let state=null, typing=false, reducedMotion=false;
+
+/* ===== 数据占位（分批填入） ===== */
+const SUBJECTS = {
+  语文:{weeks:[
+    {sub:"职场态度",title:"你想以什么态度进入职场",
+      text:"入职第一天，你走进校门，走廊里传来清脆的上课铃。一个念头在心里打转——你打算以怎样的姿态，站上这三尺讲台？",
+      choices:[
+        {label:"热情高涨，全身心投入",note:"冲劲十足，却也容易用力过猛",effects:{care:1,amb:2,mind:-1},tag:"热情投入"},
+        {label:"中规中矩，做好手头事",note:"稳妥踏实，走得稳当",effects:{prin:1,mind:1},tag:"中规中矩"},
+        {label:"浑浑噩噩，懒散且怠惰",note:"轻松省力，口碑却会慢慢垮掉",effects:{mind:1,prin:-2,amb:-1},tag:"浑浑噩噩"}
+      ]},
+    {sub:"作文风波",title:"抄来的《我的妈妈》",img:"assets/yuwen.jpg",
+      text:"你布置了一篇《我的妈妈》的作文。批改时，一篇写得格外好的文章让你眼前一亮——可越读越觉得眼熟。你上网一搜，果然，整篇是从范文集里抄的。\n\n作者是班里那个总低着头的女生小芸。她妈妈，去年去城里打工了。",
+      choices:[
+        {label:"当众批评，责令重写并写检讨",note:"维护诚信，但当众伤了她",effects:{prin:2,care:-1,mind:-1},tag:"当众批评抄袭"},
+        {label:"私下把她叫来，问她为什么抄",note:"她红着眼：不抄就交不上，妈妈会失望",effects:{care:2,mind:-1},tag:"私下问清"},
+        {label:"把这篇“好作文”推荐去参加市征文比赛，挣个指导奖",note:"名利双收，却是弄虚作假",effects:{amb:2,prin:-3,mind:-1},violation:"fraud",tag:"推荐抄袭作文参赛"}
+      ]},
+    {sub:"组队演讲",title:"六人演讲小队",img:"assets/speech.jpg",
+      text:"市里要办教职工演讲大赛，学校派你和其他五位同事，组成一支六人演讲小队出战。\n\n从拿到题目那天起，你们就扎进了教研室的排练：一起打磨讲稿的措辞，一遍遍抠发音和断句；对着镜子排舞台站位，谁走台、谁开口、谁配合手势，都商量到细节。有位同事一上台就紧张，大家陪着他反复对练，直到他能脱稿。\n\n登台那天，六个人配合得天衣无缝，台下掌声雷动，评委频频点头——这支小队，拿下了全市一等奖的好成绩。",
+      choices:[
+        {label:"努力练习",note:"配合完美，评委频频点头",effects:{care:1,amb:2,prin:1,mind:-1},tag:"努力练习"},
+        {label:"将就着弄",note:"效果一般，无功也无过",effects:{amb:1},tag:"将就着弄"},
+        {label:"过度打磨",note:"神经紧绷，压力拉满",effects:{amb:2,mind:-2,care:-1},tag:"过度打磨"}
+      ]},
+    {sub:"职称乌龙",title:"被手续绕晕的评职称",
+      text:"评职称的通知下来了，材料要得急，限期三天。可你人正在外地参加教研培训，回不来。\n\n好在学校有个年轻的同事阿燕，脑子特别灵光，盖章、送件、跑部门，样样给你办得明明白白，一次都没出过岔子。\n\n麻烦的是，职称评审这套手续实在太繁琐——同一份表要填三遍，换个部门就得重新盖章，表格、证明、照片、签名的格式要求严得吓人。阿燕聪明归聪明，也被这一环扣一环的程序磨得没了脾气，电话里跟你一件件核对，你在外地听着听着就头大了。\n\n你窝在培训地的小旅馆里，抱着台小笔记本电脑，趴在床上对着电子表格一行行地填。填到一半才发现，鼠标忘带了。你挠挠头，只能披上外套下楼，红着脸跟旅馆前台的值班大姐借了一只鼠标。",
+      choices:[
+        {label:"连夜自己赶回去，亲手把材料交到人事科",note:"最稳妥，可明天的培训就泡汤了",effects:{prin:2,amb:1,mind:-2},tag:"连夜赶回"},
+        {label:"继续远程指挥阿燕，同时熬夜把电子表填完传回去",note:"两头都要顾，你的心力快耗干了",effects:{care:1,amb:1,mind:-2},tag:"远程两头抓"},
+        {label:"拖着不交，赌“过两天补交也行”",note:"眼下省事，职称评审却可能就黄了",effects:{mind:1,amb:-2,prin:-1},tag:"拖延不交"}
+      ]},
+    {sub:"朗读公开课",title:"下不来台的少年",
+      text:"学校安排你上朗读公开课，领导坐在后排。你挑了几个平时读得好的孩子上台示范。\n\n轮到小凯时，他读错了一个字，全班哄笑。他涨红了脸，站在台上，一个字也说不出来了。后排的领导，微微皱了皱眉。",
+      choices:[
+        {label:"当众纠正：“读错了，重来一遍。”",note:"课要好看，孩子却下不来台",effects:{prin:1,amb:1,mind:-1},tag:"当众纠正"},
+        {label:"轻声说：“没关系，这句你平时读得很好，再试一次。”",note:"护住孩子的自尊，课却慢了半拍",effects:{care:2,mind:-1},tag:"护住自尊"},
+        {label:"圆场：“他今天嗓子不舒服。”叫下一个",note:"两边都顾到，只是有点心虚",effects:{amb:1,care:1,mind:-1},tag:"圆场"}
+      ]},
+    {sub:"背诵困难户",title:"背不下来的《静夜思》",
+      text:"古诗文背诵检查。全班都能背了，只有后排的阿坤背不完整。\n\n他的父亲在家长群公开质问：“我儿子是不是被放弃了？老师你管不管？”你翻档案：阿坤父母离异，他跟做快递的父亲，晚上十点家里才有人。",
+      choices:[
+        {label:"放学留他背，直到会为止",note:"严格，但他得很晚才能回家",effects:{prin:2,care:1,mind:-2},tag:"严格留堂"},
+        {label:"单独教方法，约好每晚视频打卡",note:"用心，但要额外搭进去很多时间",effects:{care:2,amb:1,mind:-2},tag:"视频陪背"},
+        {label:"放宽要求，“尽力就行”",note:"轻松了，却等于把他放过了",effects:{mind:1,prin:-1},tag:"放宽要求"}
+      ]},
+    {sub:"牛牛的难题",title:"被排斥的牛牛",
+      text:"五(1)班的男生牛牛，性格内向，成绩一般，平时非常老实。可其他同学都不爱跟他玩，无论他在哪个学习小组，都是被排斥的对象。\n\n原因很简单——牛牛的个人卫生很成问题：头不理，脸不洗，牙不刷，衣不换。望着角落里低着头的小小身影，你心里不是滋味。\n\n面对这样的情况，最合适的做法是？",
+      choices:[
+        {label:"甲 · 要求家长带牛牛去理发、洗澡、买新衣",note:"收拾干净了，孩子心里的疙瘩却未必解开",effects:{prin:-1,mind:-1},tag:"要求家长"},
+        {label:"乙 · 先家访了解家庭状况，再采取适当措施",note:"摸清家里的难处，从根子上帮",effects:{care:1,prin:1},tag:"家访了解"},
+        {label:"丙 · 个人出钱，带牛牛理发、洗澡、买新衣",note:"牛牛焕然一新，你悄悄花了钱、费了心",effects:{mind:-2,care:1},tag:"个人出钱"}
+      ]}
+  ]},
+  数学:{weeks:[
+    {sub:"职场态度",title:"你想以什么态度进入职场",
+      text:"入职第一天，你走进校门，走廊里传来清脆的上课铃。一个念头在心里打转——你打算以怎样的姿态，站上这三尺讲台？",
+      choices:[
+        {label:"热情高涨，全身心投入",note:"冲劲十足，却也容易用力过猛",effects:{care:1,amb:2,mind:-1},tag:"热情投入"},
+        {label:"中规中矩，做好手头事",note:"稳妥踏实，走得稳当",effects:{prin:1,mind:1},tag:"中规中矩"},
+        {label:"浑浑噩噩，懒散且怠惰",note:"轻松省力，口碑却会慢慢垮掉",effects:{mind:1,prin:-2,amb:-1},tag:"浑浑噩噩"}
+      ]},
+    {sub:"走方队",title:"分不清左右的方队",
+      text:"校运动会开幕式，你带班走方队。排练了一个月，步伐、口号都练得整整齐齐，你信心满满。\n\n可一到“向左转”，队伍就乱了套——一半人向左，一半人向右，好几个孩子当场面对面撞成一团。你喊口令，那个平时数学顶呱呱的孩子，左右手比划半天，还是转错了方向。\n\n你哭笑不得：这帮孩子解方程时脑子灵光得很，怎么一到脚下，就左右不分了？",
+      choices:[
+        {label:"耐着性子，把“向左转”拆成口诀教：“起手的那边，就是左。”",note:"多数孩子一下就记住了，可比赛时间也快到了",effects:{care:1,prin:1,mind:-1},tag:"口诀教方向"},
+        {label:"严肃整顿，让转错的孩子单独重练，练到对为止",note:"立了规矩，孩子的信心却被练没了",effects:{prin:2,care:-1,mind:-1},tag:"严加整练"},
+        {label:"临时改成“统一向右转”，把混乱糊弄过去",note:"糊弄过评委，你心里却清楚这不对",effects:{amb:1,mind:1,prin:-2},tag:"临阵改口令"}
+      ]},
+    {sub:"奥赛名额",title:"只有一个名额",img:"assets/shuxue.jpg",
+      text:"市里数学奥赛选拔，年级只有一个参赛名额。班里有两个人竞争：成绩稳定的小楠，和一个思维活络、却总在及格线徘徊的“怪才”小宇——他能用奇特的办法解难题，可基础一塌糊涂。\n\n两个孩子的家长，都先后找过你。",
+      choices:[
+        {label:"给成绩稳定的小楠",note:"稳，符合选拔标准",effects:{prin:2,amb:1},tag:"选稳的小楠"},
+        {label:"给小宇，赌一把他的天赋",note:"他可能一鸣惊人，也可能成绩难看",effects:{amb:2,care:1,prin:-1,mind:-1},tag:"赌一把小宇"},
+        {label:"建议学校加一场班内赛定名额",note:"公平，但要你去周旋，费神",effects:{prin:1,amb:1,care:1,mind:-1},tag:"班内加赛"}
+      ]},
+    {sub:"组队演讲",title:"六人演讲小队",img:"assets/speech.jpg",
+      text:"市里要办教职工演讲大赛，学校派你和其他五位同事，组成一支六人演讲小队出战。\n\n从拿到题目那天起，你们就扎进了教研室的排练：一起打磨讲稿的措辞，一遍遍抠发音和断句；对着镜子排舞台站位，谁走台、谁开口、谁配合手势，都商量到细节。有位同事一上台就紧张，大家陪着他反复对练，直到他能脱稿。\n\n登台那天，六个人配合得天衣无缝，台下掌声雷动，评委频频点头——这支小队，拿下了全市一等奖的好成绩。",
+      choices:[
+        {label:"努力练习",note:"配合完美，评委频频点头",effects:{care:1,amb:2,prin:1,mind:-1},tag:"努力练习"},
+        {label:"将就着弄",note:"效果一般，无功也无过",effects:{amb:1},tag:"将就着弄"},
+        {label:"过度打磨",note:"神经紧绷，压力拉满",effects:{amb:2,mind:-2,care:-1},tag:"过度打磨"}
+      ]},
+    {sub:"作弊风波",title:"纸条",
+      text:"单元测验。你巡堂时，亲眼看见班长小涛往同桌桌上递了张纸条。\n\n小涛是老师眼里的“好学生”，年级前几名。你站住不动，全班安静下来，几十双眼睛，都看着你。",
+      choices:[
+        {label:"当场没收，当众批评，记零分",note:"立规矩，班长的形象也塌了",effects:{prin:2,amb:-1,mind:-1},tag:"当场记零分"},
+        {label:"收下纸条，私下谈话，给他一次机会",note:"他是怕保不住名次才抄的",effects:{care:2,prin:-1,mind:-1},tag:"私下给机会"},
+        {label:"私下把小涛的零分改成及格，收下他家长的心意",note:"保住了“好学生”，却是在考试中弄虚作假",effects:{amb:1,mind:1,prin:-3},violation:"corruption",tag:"改分收礼"}
+      ]},
+    {sub:"基础断层",title:"讲不完的进度",
+      text:"你发现班上一半人连基础公式都磕磕绊绊，可教学进度必须往前赶——期末要考到后面的章节。\n\n平行班已经讲完了第三单元，你的班还停在第二单元。家长群里，已经有人抱怨“讲太慢”。",
+      choices:[
+        {label:"按进度硬推，讲完就练",note:"跟得上平行班，跟不上的更跟不上了",effects:{amb:2,mind:-1,care:-1},tag:"硬赶进度"},
+        {label:"放慢，把基础夯扎实",note:"稳扎稳打，却可能到期末没讲完",effects:{care:2,prin:1,amb:-2,mind:-1},tag:"夯实基础"},
+        {label:"分层：快的往前、弱的补基础，你两边跑",note:"各得其所，但你要累垮",effects:{amb:1,care:1,mind:-2},tag:"分层两头跑"}
+      ]},
+    {sub:"牛牛的难题",title:"被排斥的牛牛",
+      text:"五(1)班的男生牛牛，性格内向，成绩一般，平时非常老实。可其他同学都不爱跟他玩，无论他在哪个学习小组，都是被排斥的对象。\n\n原因很简单——牛牛的个人卫生很成问题：头不理，脸不洗，牙不刷，衣不换。望着角落里低着头的小小身影，你心里不是滋味。\n\n面对这样的情况，最合适的做法是？",
+      choices:[
+        {label:"甲 · 要求家长带牛牛去理发、洗澡、买新衣",note:"收拾干净了，孩子心里的疙瘩却未必解开",effects:{prin:-1,mind:-1},tag:"要求家长"},
+        {label:"乙 · 先家访了解家庭状况，再采取适当措施",note:"摸清家里的难处，从根子上帮",effects:{care:1,prin:1},tag:"家访了解"},
+        {label:"丙 · 个人出钱，带牛牛理发、洗澡、买新衣",note:"牛牛焕然一新，你悄悄花了钱、费了心",effects:{mind:-2,care:1},tag:"个人出钱"}
+      ]}
+  ]},
+  美术:{weeks:[
+    {sub:"职场态度",title:"你想以什么态度进入职场",
+      text:"入职第一天，你走进校门，走廊里传来清脆的上课铃。一个念头在心里打转——你打算以怎样的姿态，站上这三尺讲台？",
+      choices:[
+        {label:"热情高涨，全身心投入",note:"冲劲十足，却也容易用力过猛",effects:{care:1,amb:2,mind:-1},tag:"热情投入"},
+        {label:"中规中矩，做好手头事",note:"稳妥踏实，走得稳当",effects:{prin:1,mind:1},tag:"中规中矩"},
+        {label:"浑浑噩噩，懒散且怠惰",note:"轻松省力，口碑却会慢慢垮掉",effects:{mind:1,prin:-2,amb:-1},tag:"浑浑噩噩"}
+      ]},
+    {sub:"画被否了",title:"“这画的是个什么？”",img:"assets/meishu.jpg",
+      text:"你在楼道里张贴学生画作。一位老教师路过，指着其中一幅，当着几个孩子的面说：“这画的是什么？乱糟糟的，能看出个啥。”\n\n画的主人，是班里那个安安静静、画风大胆抽象的小然。她站在旁边，眼里的光一下子暗了。",
+      choices:[
+        {label:"当场维护小然：“这是她的表达，我觉得很好。”",note:"护住了孩子，也顶撞了前辈",effects:{care:2,prin:1,mind:-1},tag:"当众维护"},
+        {label:"私下安慰小然，教她把画面收拾得更“规矩”些",note:"让她少吃亏，却改了她的风格",effects:{care:1,amb:1,prin:-1},tag:"私下安抚"},
+        {label:"不多说，先把画挂到更显眼的位置",note:"用行动回应，话留给自己",effects:{care:2,mind:-1},tag:"挂到显眼处"}
+      ]},
+    {sub:"组队演讲",title:"六人演讲小队",img:"assets/speech.jpg",
+      text:"市里要办教职工演讲大赛，学校派你和其他五位同事，组成一支六人演讲小队出战。\n\n从拿到题目那天起，你们就扎进了教研室的排练：一起打磨讲稿的措辞，一遍遍抠发音和断句；对着镜子排舞台站位，谁走台、谁开口、谁配合手势，都商量到细节。有位同事一上台就紧张，大家陪着他反复对练，直到他能脱稿。\n\n登台那天，六个人配合得天衣无缝，台下掌声雷动，评委频频点头——这支小队，拿下了全市一等奖的好成绩。",
+      choices:[
+        {label:"努力练习",note:"配合完美，评委频频点头",effects:{care:1,amb:2,prin:1,mind:-1},tag:"努力练习"},
+        {label:"将就着弄",note:"效果一般，无功也无过",effects:{amb:1},tag:"将就着弄"},
+        {label:"过度打磨",note:"神经紧绷，压力拉满",effects:{amb:2,mind:-2,care:-1},tag:"过度打磨"}
+      ]},
+    {sub:"职称乌龙",title:"被手续绕晕的评职称",
+      text:"评职称要交材料，通知来得急，限期三天。可你偏偏在外地带队参加区里的美术展，回不来。\n\n好在学校有个年轻的同事阿晴，脑子特别灵光，盖章、送件、跑部门，样样给你办得明明白白，一次都没出过岔子。\n\n麻烦的是，职称评审这套手续实在太繁琐——同一份表要填三遍，换个部门就得重新盖章，表格、证明、照片、签名的格式要求严得吓人。阿晴聪明归聪明，也被这一环扣一环的程序磨得没了脾气，电话里跟你一件件核对，你在外带队听着听着就头大了。\n\n材料实在等不起，你索性在带队落脚的小镇上找了家网吧，开了一台机子，对着屏幕一行行地填电子表格，才勉强把件备齐。",
+      choices:[
+        {label:"连夜回去办理",note:"外地的事就耽误了",effects:{prin:2,amb:1,mind:-2},tag:"连夜回去"},
+        {label:"一直电话+网络办理",note:"非常费神，而且很不好意思",effects:{care:1,amb:1,mind:-2},tag:"远程办理"},
+        {label:"开一局紧张刺激的《酸角州》",note:"职称就耽误了",effects:{amb:-3,care:-1,mind:1},tag:"打游戏误事"}
+      ]},
+    {sub:"画材之争",title:"被挪走的画材",
+      text:"你领回的美术课画材——一箱水彩和素描纸——刚放进器材室，就被隔壁班老师挪去“临时做数学练习卷用纸”了。孩子们兴冲冲等了一节课，最后只能看着你两手空空。\n\n主任的意思是：主科优先，美术课凑合凑合。",
+      choices:[
+        {label:"找主任据理力争，把画材要回来",note:"守住了美术课，也得罪了主科老师",effects:{prin:2,care:1,amb:-1,mind:-1},tag:"据理力争"},
+        {label:"忍了，用粉笔在黑板上带着大家画",note:"凑合过去，孩子们却失望",effects:{mind:1,care:-1,prin:-1},tag:"忍气凑合"},
+        {label:"自己去申请专项画材经费，给美术课配足",note:"一劳永逸，但折腾、费神",effects:{amb:2,care:1,mind:-2},tag:"申请经费"}
+      ]},
+    {sub:"比赛辅导",title:"有天赋却没时间",
+      text:"区里少儿美术比赛。你看中小宇的画，色彩和构图都好，很有灵气。可他的家长一口回绝：“比赛能加分吗？不能就别占用他写作业的时间。”\n\n孩子却眼巴巴地看着你，分明是想参加的。",
+      choices:[
+        {label:"去和家长深谈，争取每天半小时辅导",note:"可能说动家长，但要磨嘴皮、耗心力",effects:{care:2,amb:1,mind:-2},tag:"争取辅导时间"},
+        {label:"尊重家长，放弃小宇，改派另一个孩子",note:"省心，却寒了最想画的那个孩子的心",effects:{care:-1,amb:-1,mind:1,prin:-1},tag:"改派他人"},
+        {label:"私下应下家长“来家单独辅导，钱好说”",note:"赚了外快，却是明令禁止的有偿补课",effects:{amb:2,mind:-1,prin:-2},violation:"tutoring",tag:"有偿补课"}
+      ]},
+    {sub:"牛牛的难题",title:"被排斥的牛牛",
+      text:"五(1)班的男生牛牛，性格内向，成绩一般，平时非常老实。可其他同学都不爱跟他玩，无论他在哪个学习小组，都是被排斥的对象。\n\n原因很简单——牛牛的个人卫生很成问题：头不理，脸不洗，牙不刷，衣不换。望着角落里低着头的小小身影，你心里不是滋味。\n\n面对这样的情况，最合适的做法是？",
+      choices:[
+        {label:"甲 · 要求家长带牛牛去理发、洗澡、买新衣",note:"收拾干净了，孩子心里的疙瘩却未必解开",effects:{prin:-1,mind:-1},tag:"要求家长"},
+        {label:"乙 · 先家访了解家庭状况，再采取适当措施",note:"摸清家里的难处，从根子上帮",effects:{care:1,prin:1},tag:"家访了解"},
+        {label:"丙 · 个人出钱，带牛牛理发、洗澡、买新衣",note:"牛牛焕然一新，你悄悄花了钱、费了心",effects:{mind:-2,care:1},tag:"个人出钱"}
+      ]}
+  ]},
+};
+/* ===== 通用学生事件（每个科目都会遇到，{sub} 会被替换成所选科目）===== */
+const GENERIC_STUDENTS=[
+  {name:"阿聪",tag:"爱撒谎 · 但很机灵",desc:"脑瓜子转得飞快，撒谎从不脸红，总能自圆其说"},
+  {name:"小默",tag:"不爱说话 · 但很有创造力",desc:"一学期不举手，却常给人惊艳的答案和作品"},
+  {name:"阿飞",tag:"多动 · 但体育天赋极好",desc:"上课坐不住三分钟，一上操场就变了个人"},
+  {name:"小乖",tag:"很乖 · 但啥也听不懂",desc:"笔记工整、从不捣乱，可就是跟不上"}
+];
+const GENERIC={
+  sly:{sub:"班上的机灵鬼",title:"撒谎不眨眼的阿聪",
+    text:"班里有个孩子叫阿聪，脑瓜子转得飞快，撒谎从不脸红——迟到说是帮邻居送人，作业没写说是本子掉了，总能编得滴水不漏，还时常逗得同学哈哈大笑。\n\n这个阶段，在{sub}的课堂上，你当场撞破了他：作业本是从前排同学桌上抽的，字迹都没擦干净。全班都安静下来，几十双眼睛，等着你处置。",
+    choices:[
+      {label:"当众揪住他训斥一顿，罚站到放学",note:"立了威，却是在侮辱、体罚学生",effects:{prin:2,care:-2,mind:-1},violation:"harm",tag:"体罚羞辱"},
+      {label:"私下谈话，先问清他为什么总撒谎",note:"他红着眼：怕说实话，大家不喜欢他",effects:{care:2,mind:-1},tag:"私下谈心"},
+      {label:"只没收本子，轻轻放过",note:"省事，可他下回还会编",effects:{mind:1,prin:-2},tag:"轻轻放过"}
+    ]},
+  quiet:{sub:"沉默的创作者",title:"从不举手的小默",
+    text:"班里有个孩子叫小默，一学期没主动举过一次手，上课从不吭声，安安静静坐在角落，像个小透明。\n\n可你批改{sub}作业时发现，他交上来一个让全班都想不到的东西——思路清奇，藏着惊人的灵气。你难得当众表扬他，他却涨红了脸，恨不能钻进地缝里。",
+    choices:[
+      {label:"趁热多夸几句，想帮他建立自信",note:"结果他更不自在了，之后总躲着你",effects:{care:2,amb:-1,mind:-1},tag:"当众多夸"},
+      {label:"用私下的方式肯定他，不强求当众说话",note:"尊重他的节奏，慢慢来",effects:{care:2,prin:1},tag:"私下肯定"},
+      {label:"把他的好作品署上自己的名字，拿去参加教师赛",note:"名利双收，却是明摆着的弄虚作假",effects:{amb:2,mind:-1,prin:-2},violation:"fraud",tag:"窃取学生作品"}
+    ]},
+  hyper:{sub:"坐不住的孩子",title:"一上操场就发光的阿飞",
+    text:"班里有个孩子叫阿飞，上课坐不住三分钟，小动作不断，笔都能玩出花样，各科老师都头疼。\n\n可他一下课到了操场就变了个人——跑得快、跳得高、球感也好，校队教练说，这孩子天生是练体育的料。这个阶段，他因为{sub}课上捣乱被记了过；可校运会选拔，就在下周。",
+    choices:[
+      {label:"按纪律处理，运动会也按规矩来",note:"规矩是规矩，他的天赋又得压下去",effects:{prin:2,care:-1},tag:"按纪律"},
+      {label:"跟班主任商量，给他“训练换纪律”的机会",note:"可能救活他，也有人会说偏心",effects:{care:2,amb:1,prin:-1,mind:-1},tag:"训练换纪律"},
+      {label:"两边都不插手，装没看见",note:"省心，却把他晾在了半路",effects:{mind:1,care:-1,amb:-1},tag:"不插手"}
+    ]},
+  diligent:{sub:"努力的慢孩子",title:"怎么都学不会的小乖",
+    text:"班里有个孩子叫小乖，从不捣乱，笔记抄得工工整整，作业从不缺交，是老师们公认的乖孩子。\n\n可你讲了三遍，他还是用那双认真的眼睛看着你，小声说：“老师，我还是没听懂。”他的家长也着急，私下问你：“是不是我们家孩子笨？”",
+    choices:[
+      {label:"再用常规讲法教几遍，多布置练习",note:"他更努力了，可还是吃力",effects:{amb:1,prin:1,mind:-1},tag:"多练多讲"},
+      {label:"单独给他换更慢、更直观的教法，从基础补",note:"他可能慢慢开窍，但要搭你很多时间",effects:{care:2,mind:-2},tag:"单独补基础"},
+      {label:"收下小乖家长塞来的红包，说会“多关照孩子”",note:"来者不拒，却是收受家长财物",effects:{mind:1,amb:1,prin:-2},violation:"bribery",tag:"收受红包"}
+    ]}
+};
+/* 各科特色学生（学生花名册用） */
+const SUB_STUDENTS={
+  语文:[{name:"小芸",tag:"心思重 · 作文好",desc:"妈妈去城里打工，她总低着头，作文里藏着思念"},
+    {name:"阿坤",tag:"懂事 · 背诵吃力",desc:"父母离异，跟做快递的父亲，晚上十点家里才有人"},
+    {name:"小凯",tag:"自尊强 · 易紧张",desc:"朗读会脸红，一句错字就能让他下不来台"}],
+  数学:[{name:"小宇",tag:"思维活 · 基础差",desc:"怪才，能用奇特办法解题，可总在及格线徘徊"},
+    {name:"小涛",tag:"要强 · 好学生",desc:"班长、年级前几名，怕保不住名次"},
+    {name:"小楠",tag:"稳定 · 踏实",desc:"成绩稳，从不出错，家长都放心"}],
+  美术:[{name:"小然",tag:"安静 · 画风大胆",desc:"作品抽象有灵气，却常被人说“乱画”"},
+    {name:"小宇",tag:"有天赋 · 时间紧",desc:"色彩构图都好，可家长只让他写作业"}]
+};
+
+const FINAL_EXAM = {
+  sub:"领导听课 · 全科测评",
+  title:"退休前 · 最后一课",
+  img:"assets/tuiwu.jpg",
+  text:"退休前。校长带着教研组来你的班听课，还要调看这一学期的教案、作业批改记录和学生评教表。\n\n一节课讲完，校长没多说什么，只问了一句：“{name}老师，这一路走来，你觉得当老师，最难的是什么？”\n\n台下，是你教了一辈子的孩子们。站在讲台上，你忽然有点恍惚——答案，好像早就写在你这一年的每一次取舍里了。\n\n而你接下来的回答，不仅是答这一问，也是你为未来选择的一条路。",
+  choices:[
+    {label:"“最难的是把每一节课都磨成精品，我想在专业上走到底。”",note:"你瞄准了职称晋升这条路",route:"title",effects:{amb:2,mind:-1},tag:"选择职称路线"},
+    {label:"“最难的是带出能让我骄傲的学生，也把教学做成研究。”",note:"你向往名师与教研的方向",route:"master",effects:{care:2,amb:1,mind:-1},tag:"选择名师路线"},
+    {label:"“最难的是让一整个学校的人心往一处使，我想试试管理。”",note:"你动了走向管理岗的念头",route:"admin",effects:{prin:2,amb:1,mind:-1},tag:"选择管理路线"}
+  ]
+};
+
+const ENDINGS = {
+  prof_top:{bad:false,badge:"职称巅峰 · 正高级教师",
+    title:"正高级的聘书",
+    text:"很多年后，你评上了正高级职称——那是教师职称序列的最高一级，评上的人屈指可数。\n\n聘书送来的那天，你正给青年教师做示范课。台下坐着一圈比你年轻的脸，你想起自己第一次站上讲台的样子。\n\n这一路，你把每一节课都当作品来磨：深夜改的教案堆成了小山，公开课一遍遍打磨，论文一篇篇写。有人笑你“只会教书”，你不以为意——教书这件事，你做到了别人够不到的高度。\n\n你在讲台上，一站就是很多年。而你的名字，稳稳写在职称的最高一栏。"},
+  prof_mid:{bad:false,badge:"职称 · 副高级教师",
+    title:"副高级的聘书",
+    text:"几年后，你评上了副高级职称——在职称序列里稳稳站上了高台阶。\n\n不是最快的，也不是最高的，但每一步都踩得实。你的课被磨得越来越细，青年教师爱听你讲怎么备课。\n\n你偶尔会想，要是当年再拼一点，是不是能评上正高级。可看着台下那些认真记笔记的年轻老师，你又觉得，这份扎实本身就是一种抵达。\n\n职称是一张纸，你把它拿在手里，继续把课讲好。"},
+  master_top:{bad:false,badge:"名师 · 省市名师",
+    title:"名师工作室",
+    text:"你评上了省市名师，成了这一片教育圈里叫得响的名字。\n\n你带起了自己的名师工作室，年轻老师排着队来跟你学；你的教研论文发到省级刊物，还主持了课题。你不再只是一个班级的老师，你影响的是一批老师。\n\n偶尔你会想起那个不爱说话、却总有惊人之作的孩子。你如今做的事，和他当年一样——把一个可能被忽视的才华，认出来，再点亮它。\n\n名师这顶帽子不轻，但你戴得住。因为你知道，真正的名师，是让更多好老师站到台前。"},
+  admin_top:{bad:false,badge:"晋升 · 一校之长",
+    title:"校长室的门牌",
+    text:"两年后，你被提拔为副校长，又过两年，你成了这所学校的校长。\n\n你站在校长室的落地窗前，能看见操场上奔跑的孩子，也能看见教学楼里亮着的灯。\n\n你改了学校的很多规矩：给副科老师争取足额的课时和画材，给班主任设了“心力假”，还规定——评优的标准里，不再只有分数。\n\n老师们私下说，新校长自己当过那个“两头为难”的人，所以懂。\n\n你在抽屉里留着一张泛黄的纸，上面画着两个人并肩站在亮灯的屋子前。每当觉得难的时候，你就看一眼。"},
+  master_mid:{bad:false,badge:"骨干 · 学科带头人",
+    title:"教研组里的主心骨",
+    text:"你成了学校的骨干教师、学科带头人，教研组里的主心骨。\n\n公开课、示范课、帮带青年教师、课题研究……你的名字频繁出现在学校的各种名单里。同事说，你带课的班成绩好，还从没见过你打骂一个孩子。\n\n你心里清楚，这条路你走得不算快，但一直没偏。\n\n你坐在教研组办公室，把新老师的教案一份份改过去。窗外的学生跑过，你的眼角弯了弯——这条路，你愿意一直走。"},
+  admin_mid:{bad:false,badge:"管理 · 年级主任",
+    title:"从讲台走向办公室",
+    text:"你从教研组长做起，一步步当上了年级主任。\n\n你开始处理比分数更复杂的事：老师之间的协调、家校之间的纠纷、课时和排课的平衡。你发现，让一整个年级的人心往一处使，比上一节课难得多。\n\n但你愿意学。你在讲台上练出的那份对孩子的耐心，如今用在了每一个老师身上。\n\n有人劝你往更高的位子走，你笑了笑，没有接话。你知道，管理这条路，你才刚上路。"},
+  legacy:{bad:false,badge:"彩蛋 · 学成归来",
+    title:"当年那个孩子，回来了",
+    text:"很多年后的一个下午，你正在办公室批改作业，门被轻轻敲响。\n\n推门进来的是一个陌生的年轻人，西装笔挺，眉眼却让你心里一动。他站在门口，看着你，忽然笑了：“老师，是我。”\n\n你认出来了——是当年那个孩子。他后来考上了最好的学校，如今成了那个领域里人人知道的名字。\n\n他说他这些年一直记得你说的某句话、你做的某件事。这次回来，是想谢谢你，也是想——拉你一把。\n\n他帮你解决的，正是你眼下最犯难的那件大事。你看着他的背影走出校门，忽然觉得，当老师这件事，值了。\n\n原来教过的每一个孩子，都可能在某一天，成为照亮你的一束光。"},
+  ordinary:{bad:false,badge:"平凡 · 仍在讲台",
+    title:"普通老师的一天",
+    text:"退休那天，你没有评上优秀，也没有被表扬或批评——你的名字，稳稳地待在花名册中间那一栏。\n\n你就是个普普通通的老师：备课、上课、批改、开家长会，偶尔被主任不轻不重地敲打一句，偶尔为孩子的事熬到半夜。\n\n可你不知道的是，那个你曾为他留过堂的男生，毕业时在同学录“最想感谢的老师”那一栏，一笔一画写下了你的名字。\n\n当老师这件事，很多时候没有响亮的结果，只有一天天站住的讲台。你守住了它，也守住了自己的良心。\n\n平凡，但踏实。"},
+  warning:{bad:true,badge:"警示 · 警告留任",
+    title:"一封措辞严厉的函",
+    text:"退休评定前，你的办公桌上多了一封信——是学校《教学师德考核意见函》。\n\n措辞不算客气：存在师德或教学表现上的不足，予以警告，限期整改。\n\n主任把你叫去，语气缓和了些，却依旧压着：“胡老师，学校给了你机会，下学期，得拿成绩和口碑说话。”\n\n你坐在空荡荡的办公室里，把这一年的选择在脑子里过了一遍。原来那些“省事”“讨巧”“两边糊弄”的决定，最终都写了成本，记在了这张纸上。\n\n警告不重，却像一记警钟。你知道，下一学年，你必须重新站直了。"},
+  penalty:{bad:true,badge:"记过 · 留任察看",
+    title:"一份记过处分",
+    text:"那个阶段，你的办公桌上多了一份《处分决定书》：经查，你在师德方面存在违规行为，予以记过处分，留任察看；年度考核定为不合格，若再犯，予以辞退。\n\n处分决定贴在公告栏那天，你路过时，看到几个学生远远站着，交头接耳。你低着头快步走开，没敢看他们的眼睛。\n\n晚上你坐在办公室，把这一年的选择在脑子里过了一遍。那些收下的红包、那些改过的分数、那些睁一只眼闭一只眼的时刻……原来每一样，都清清楚楚记在学校的账上。\n\n记过不轻。你知道，下一学年，是你最后一次机会了。"},
+  burnout:{bad:true,badge:"警醒 · 心力透支",
+    title:"“老师，先照顾好你自己”",
+    text:"这些年来，你把心力一点一点透支干净——备课到深夜、陪练到天黑、谁的需求都想接、谁的期待都不想辜负。\n\n期末前，你终于撑不住，倒在了办公桌前。校医说你压力过大、严重疲劳，建议休养。\n\n你请了长假。离开学校的那个下午，孩子们放学时在门口围住你，七嘴八舌：“老师你别走！”“老师你要好好的！”\n\n你站在校门口，眼泪一下子没忍住。\n\n一个好老师，不是把自己烧成灰。你得先是一个好好的、会累的人，才站得住那个讲台。\n\n你把孩子们的信小心收好。休养好了，你想换一种不这么透支的方式，重新回去。"},
+  misconduct:{bad:true,badge:"严重违规 · 辞退",
+    title:"红头文件",
+    text:"某一年的秋天，一封措辞严厉的红头文件，落到了你的案头：经查，你在师德方面存在严重问题，予以辞退。\n\n起因是那个被你一次次“当作没看见”的选择，终究没能藏住——一个孩子哭着找家长，一个家长愤怒地告到了教育局。\n\n你想起那些“省事”的时刻：当作没看见的作弊、高高举起轻轻放下的批评、为了好看而让某个孩子隐形的课堂。\n\n它们一个个地，最后叠成了这份文件。\n\n你收拾东西那天，那个曾被你说过“画得真好”的孩子，在走廊尽头远远地看着你，没有走近，也没有说话。\n\n你忽然明白：老师这个位置，最怕的不是做得不完美，而是——在该看见的时候，选择了不看。"},
+  sick_yuwen:{bad:true,badge:"突发急症 · 重病",
+    title:"严重过敏，倒在讲台",
+    text:"{name}老师，你的心力彻底垮了。\n\n这些年你硬扛着，过敏越来越重。这天课上到一半，一阵剧烈的咳嗽和喷嚏再也止不住，你脸色发白、眼前发黑，晕倒在了讲台前。\n\n学生吓坏了，学校立刻叫来救护车把你送进医院。医生说这是长期过劳诱发的严重过敏反应，必须长期休养，再难回到一线课堂。\n\n退休那天，你没等来。你的教师生涯，提前画上了句号。"},
+  sick_shuxue:{bad:true,badge:"突发急症 · 重病",
+    title:"偏头疼发作，倒在讲台",
+    text:"{name}老师，你的心力彻底垮了。\n\n这些年高强度和连轴转的熬夜，让你的偏头疼越来越频繁。这天讲到一半，一阵钻心的剧痛从太阳穴炸开，你扶着讲台的手指发白、冷汗直流，直直倒了下去。\n\n学生一阵惊呼，学校叫来救护车送你进医院。医生说这是长期过劳诱发的严重神经性头痛，必须长期休养，再难回到一线课堂。\n\n退休那天，你没等来。你的教师生涯，提前画上了句号。"},
+  sick_meishu:{bad:true,badge:"突发急症 · 重病",
+    title:"鼻血不止，被送进医院",
+    text:"{name}老师，你的心力彻底垮了。\n\n这些年你总在深夜改画、备材料、带队参赛，身体早就敲响了警钟。这天你在画室里示范，一阵眩晕，鼻血毫无征兆地涌了出来，越擦越多，怎么都止不住。\n\n学生被吓到，美术组长赶紧叫救护车送你去了医院。医生说这是长期过劳导致的高血压性鼻出血，必须长期休养，再难回到一线课堂。\n\n退休那天，你没等来。你的教师生涯，提前画上了句号。"}
+};
+function sickKey(){return state.sub==="数学"?"sick_shuxue":state.sub==="美术"?"sick_meishu":"sick_yuwen";}
+
+/* ---- 音乐引擎：4 首 BGM 随场景切换（Web Audio 保留点击音效） ---- */
+const BGM_EL={calm:"bgm-calm",tension:"bgm-tension",sad:"bgm-sad",glory:"bgm-glory",bit:"bgm-8bit"};
+let audioCtx=null, musicOn=false, currentSet=null, endingKind=null;
+function ensureAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")audioCtx.resume();}
+function playClick(){if(reducedMotion)return;try{ensureAudio();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type="sine";o.frequency.value=520;g.gain.value=0.05;o.connect(g);g.connect(audioCtx.destination);o.start();g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.14);o.stop(audioCtx.currentTime+0.15);}catch(e){}}
+function endingMusic(){return endingKind==="sad"?"sad":(endingKind==="glory"?"glory":"calm");}
+function viewSet(v){return v==="view-end"?endingMusic():"bit";}
+function setBgm(k){currentSet=k;const t=document.getElementById(BGM_EL[k]);Object.values(BGM_EL).forEach(id=>{const e=document.getElementById(id);if(!e)return;if(id===BGM_EL[k]){if(e.paused){e.volume=0.55;e.play().catch(()=>{});}}else{e.pause();}});}
+function startMusic(k){musicOn=true;setBgm(k);updateMusicIcon();}
+function switchSet(k){if(!musicOn||!BGM_EL[k]||k===currentSet)return;setBgm(k);}
+function stopMusic(){musicOn=false;currentSet=null;Object.values(BGM_EL).forEach(id=>{const e=document.getElementById(id);if(e)e.pause();});updateMusicIcon();}
+function toggleMusic(){ensureAudio();if(musicOn)stopMusic();else startMusic(viewSet(activeView()));}
+function activeView(){const a=document.querySelector(".view.active");return a?a.id:"view-title";}
+function updateMusicIcon(){document.querySelectorAll(".btn-music").forEach(b=>{b.classList.toggle("muted",!musicOn);b.setAttribute("aria-pressed",musicOn?"true":"false");});}
+
+/* ---- 工具 ---- */
+function markup(t){return t.replace(/\*\*(.+?)\*\*/g,'<span class="hl">$1</span>').replace(/~(.+?)~/g,'<span class="em">$1</span>');}
+function fillName(t){const n=(state&&state.name)?state.name:"阿奇";return t.replace(/\{name\}/g,n).replace(/\{sub\}/g,state.sub);}
+function pct(v,m){const c=Math.max(0,Math.min(m,v));return Math.round(c/m*100);}
+function renderAttrs(container,data){container.innerHTML="";ATTRS.forEach(a=>{const r=document.createElement("div");r.className="attr-row";r.innerHTML='<span class="attr-name">'+a.name+'</span><div class="attr-bar"><div class="attr-fill" style="width:'+pct(data[a.key],a.max)+'%"></div></div><span class="attr-val">'+data[a.key]+'</span>';container.appendChild(r);});}
+
+/* ---- 科目选择 UI ---- */
+const SUB_META={
+  语文:{desc:"重读写表达 · 困境多是作文、公开课与背诵",teacher:"短发戴眼镜的女教师"},
+  数学:{desc:"重成绩与思维 · 困境多是竞赛、作弊与压轴题",teacher:"长发不戴眼镜的女教师"},
+  美术:{desc:"重审美与创作 · 困境多是作品被否、画材被占与比赛",teacher:"短发戴眼镜的男教师"},
+};
+function buildSubjects(){
+  const box=document.getElementById("subject-options");
+  box.innerHTML="";let first=true;
+  Object.keys(SUB_META).forEach(k=>{
+    const b=document.createElement("button");b.className="opt"+(first?" active":"");b.dataset.sub=k;b.textContent=k;
+    b.addEventListener("click",()=>{document.querySelectorAll("#subject-options .opt").forEach(o=>o.classList.remove("active"));b.classList.add("active");document.getElementById("subject-desc").textContent=SUB_META[k].desc;document.querySelectorAll(".portrait").forEach(p=>p.classList.remove("show"));const pt=document.getElementById("portrait-"+({语文:"yuwen",数学:"shuxue",美术:"meishu"}[k]||k));if(pt)pt.classList.add("show");const defN={语文:"阿雨",数学:"阿红",美术:"阿奇"}[k];const ni=document.getElementById("player-name");if(ni)ni.value=defN;playClick();});
+    box.appendChild(b);first=false;
+  });
+  document.getElementById("subject-desc").textContent=SUB_META["语文"].desc;
+}
+function chosenSub(){const a=document.querySelector("#subject-options .opt.active");return a?a.dataset.sub:"语文";}
+
+/* ---- 渲染：当前周困境（1-4周科目专属 / 5-8周通用学生 / 9周期末） ---- */
+const GENERIC_KEYS=["sly","quiet","hyper","diligent"];
+const TOTAL_WEEKS=9;
+function curNode(){
+  if(state.week===8){const fe=Object.assign({},FINAL_EXAM);if(state.sub==="美术")fe.img="assets/meishu-final.jpg";return {ch:"· 退休前",sub:"领导听课 · 全科测评",...fe};}
+  const subWeeks=SUBJECTS[state.sub].weeks;
+  if(state.week < subWeeks.length){
+    const w=subWeeks[state.week];
+    return {ch:"第 "+(state.week+1)+" 个阶段 · "+state.sub,sub:w.sub,...w};
+  }
+  const g=GENERIC[GENERIC_KEYS[state.week-subWeeks.length]];
+  return {ch:"第 "+(state.week+1)+" 个阶段 · "+state.sub,sub:g.sub,...g};
+}
+function renderGame(){
+  const node=curNode();
+  switchSet("bit");
+  const storyText=fillName(node.text);
+  document.getElementById("scene-label").innerHTML=node.ch+"<small>"+node.sub+"</small>";
+  document.getElementById("scene-title").textContent=node.title;
+  const box=document.getElementById("scene-para");
+  const choicesBox=document.getElementById("choices");
+  choicesBox.innerHTML="";
+  document.getElementById("wp-fill").style.width=((state.week+1)/TOTAL_WEEKS*100)+"%";
+  document.getElementById("wp-txt").textContent="第 "+(state.week+1)+" / "+TOTAL_WEEKS+" 个阶段";
+  document.getElementById("tap-hint").style.visibility=(storyText.length>40?"visible":"hidden");
+  if(node.img)showSceneImg(node,function(){typeStory(node,storyText,choicesBox,box);});
+  else typeStory(node,storyText,choicesBox,box);
+}
+function typeStory(node,storyText,choicesBox,box){
+  if(reducedMotion){box.innerHTML=markup(storyText);showChoices(node,choicesBox);return;}
+  typing=true;box.innerHTML="";let i=0;const full=storyText,speed=26;
+  const timer=setInterval(()=>{i++;box.innerHTML=markup(full.slice(0,i))+'<span class="cursor"></span>';if(i>=full.length){clearInterval(timer);typing=false;showChoices(node,choicesBox);}},speed);
+  box.onclick=function(){if(typing){clearInterval(timer);typing=false;box.innerHTML=markup(full);showChoices(node,choicesBox);}};
+}
+function showChoices(node,box){box.innerHTML="";const letters=["甲","乙","丙"];node.choices.forEach((c,i)=>{const b=document.createElement("button");b.className="choice";b.innerHTML='<span class="idx">'+(letters[i]||(i+1))+'</span>'+markup(c.label)+(c.note?'<small>'+c.note+'</small>':'');b.addEventListener("click",()=>choose(c));box.appendChild(b);});}
+
+/* 强剧情图片过场：场景人物图 → 点击进入正文；正常节点不调用 */
+function showSceneTip(t){const e=document.getElementById("scene-img-tip");if(e)e.textContent=t;}
+function showSceneImg(node,cb){
+  const sc=document.getElementById("scene-img");if(!sc||!node.img){if(cb)cb();return;}
+  const pic=document.getElementById("scene-img-pic");
+  pic.src=node.img;
+  document.getElementById("scene-img-cap").innerHTML='<div class="sic-ch">'+node.ch+'</div><div class="sic-title">'+node.title+'</div>';
+  showSceneTip("图片加载中…");
+  let ready=false;
+  const mark=function(){ready=true;showSceneTip("点击图片，继续");};
+  pic.onload=mark;
+  setTimeout(mark,2000);
+  sc.classList.add("show");
+  sc.onclick=function(){
+    if(!ready)return;
+    sc.classList.remove("show");sc.onclick=null;pic.onload=null;if(cb)cb();
+  };
+}
+
+/* ---- 抉择与周推进 ---- */
+function choose(c){
+  playClick();
+  ATTRS.forEach(a=>{if(c.effects&&c.effects[a.key])state.attrs[a.key]+=c.effects[a.key];});
+  if(c.violation&&state.violations.indexOf(c.violation)<0){state.violations.push(c.violation);showVioToast(c.violation);}
+  if(c.route)state.route=c.route;
+  state.steps++;state.log.push(c.tag||c.label);
+  weekAdvance();
+}
+function weekAdvance(){
+  const a=state.attrs;
+  if(a.mind<2)return triggerEnd(sickKey(),true);         /* 心力告急 → 突发疾病，直接坏结局 */
+  if(a.care<=1&&a.prin<=1)return triggerEnd("misconduct",true);
+  if(state.week===TOTAL_WEEKS-1){finish();return;}
+  state.week++;
+  showFeedback();
+  save();
+}
+function showFeedback(){
+  const a=state.attrs;const s=a.care+a.prin+a.amb;const isLast=(state.week===TOTAL_WEEKS-1);
+  const card=document.getElementById("feedback-card");
+  let tag="本周评价",t="主任的批注",msg="",warn="";
+  if(isLast){tag="退休评定";t="这一生，你站到了评定面前";msg="教务主任把评定表递到你面前：“{name}老师，这一路你走得如何，大家心里有数。让我们看看，你的名字最终会写在哪一行。”";warn="";card.className="feedback-card";}
+  else if(a.mind<=4){tag="心力预警";t="你有点撑不住了";msg="教务主任把你叫到办公室：“{name}老师，听说你最近天天加班？身体是本钱，别把自己熬坏了。”";warn="心力过低，再这样下去你撑不到期末。";card.className="feedback-card risk";}
+  else if(s>=22){tag="表现良好";t="主任难得点了点头";msg="“这个阶段处理得还算体面。继续保持，学校看得出你的用心。”";card.className="feedback-card";}
+  else if(s>=13){tag="中规中矩";t="主任没多说什么";msg="“嗯，按部就班。不过，评职称是要看成绩和师德的，你自己掂量。”";card.className="feedback-card";}
+  else{tag="点名敲打";t="主任敲了敲桌子";msg="“{name}老师，这些年来你的表现可不算出彩。再这样下去，退休前的评定、甚至去留，都不好说。”";warn="你的职场评价正在走低，请谨慎做出每个选择。";card.className="feedback-card alert";}
+  document.getElementById("fb-tag").textContent=tag;
+  document.getElementById("fb-title").textContent=t;
+  document.getElementById("fb-msg").textContent=fillName(msg);
+  document.getElementById("fb-warn").textContent=warn;
+  const btn=document.getElementById("btn-fb-next");
+  btn.textContent=isLast?"接受考核结果":"进入第 "+(state.week+1)+" 阶段";
+  document.getElementById("feedback-panel").classList.add("open");
+  window.__fbNext=function(){document.getElementById("feedback-panel").classList.remove("open");renderGame();};
+}
+
+/* ---- 师德红线：只有明确违规才会触发警告/处罚/辞退 ---- */
+const VIO_TEXTS={
+  harm:{name:"侮辱、体罚学生",clause:"不得歧视、侮辱、虐待、体罚学生"},
+  fraud:{name:"弄虚作假、剽窃",clause:"不得在评优、竞赛、成果中弄虚作假"},
+  bribery:{name:"收受家长财物",clause:"不得索要、收受学生及家长财物"},
+  corruption:{name:"考试舞弊、徇私",clause:"不得在招生、考试、评优中徇私舞弊"},
+  tutoring:{name:"有偿补课",clause:"不得组织、参与有偿补课，不得为校外机构介绍生源"}
+};
+function showVioToast(id){
+  const t=VIO_TEXTS[id];if(!t)return;
+  const el=document.createElement("div");el.className="vio-toast";
+  el.innerHTML="<b>师德红线警示</b><br>你已触犯《新时代中小学教师职业行为十项准则》——"+t.clause+"<br>违规累积：警告 → 记过 → 辞退";
+  document.body.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add("show"));
+  setTimeout(()=>{el.classList.remove("show");setTimeout(()=>el.remove(),400);},3600);
+}
+
+/* ---- 结局：红线优先 → 三路线晋升 → 隐藏彩蛋 ---- */
+function triggerEnd(id,mid){state.early=mid;finish();}
+function decideEnding(){
+  const a=state.attrs;
+  if(a.mind<2)return sickKey();                        /* 心力告急 → 突发疾病（按科目） */
+  if(state.early)return "burnout";            /* 心力透支（健康问题，非师德处分） */
+  const vio=state.violations.length;
+  const severe=state.violations.indexOf("harm")>=0||state.violations.indexOf("corruption")>=0;
+  if(vio>=3||severe)return "misconduct";                 /* 严重违规 → 辞退 */
+  if(vio===2)return "penalty";                           /* 两项违规 → 记过 */
+  if(vio===1)return "warning";                           /* 一项违规 → 警告留任 */
+  const s=a.care+a.prin+a.amb;
+  const route=state.route||"title";
+  /* 隐藏彩蛋：无违规、表现好、随机触发 */
+  if(s>=20&&Math.random()<0.28)return "legacy";
+  /* 职称晋升路线 */
+  if(route==="title")return a.amb>=11?"prof_top":(a.amb>=7?"prof_mid":"ordinary");
+  /* 名师/教研路线 */
+  if(route==="master")return (a.care+a.amb)>=18?"master_top":((a.care+a.amb)>=12?"master_mid":"ordinary");
+  /* 学校管理路线 */
+  return (a.prin+a.amb)>=16?"admin_top":((a.prin+a.amb)>=10?"admin_mid":"ordinary");
+}
+function finish(){
+  const id=decideEnding();const E=ENDINGS[id];
+  endingKind=E.bad?"sad":"glory";
+  const statsEl=document.getElementById("end-stats");
+  document.getElementById("end-badge").textContent="结局 · "+E.badge;
+  document.getElementById("end-badge").className="end-badge"+(E.bad?" bad":"");
+  document.getElementById("end-title").innerHTML=fillName(E.title);
+  document.getElementById("end-para").innerHTML=fillName(markup(E.text));
+  statsEl.innerHTML="";
+  ATTRS.forEach(a=>{const r=document.createElement("div");r.className="stat-row";r.innerHTML='<span class="attr-name">'+a.name+'</span><div class="attr-bar"><div class="attr-fill" style="width:'+pct(state.attrs[a.key],a.max)+'%"></div></div><span class="attr-val">'+state.attrs[a.key]+'</span>';statsEl.appendChild(r);});
+  const s=state.attrs.care+state.attrs.prin+state.attrs.amb;
+  const ROUTE_NAMES={title:"职称晋升",master:"名师 / 教研",admin:"学校管理"};
+  let note="职业路线："+(ROUTE_NAMES[state.route]||"职称晋升")+" · 综合评价 "+(s<11?"低迷":s<18?"普通":s<26?"良好":s<32?"优秀":"卓越")+" · 你任教"+state.sub+" · 一共做出 "+state.steps+" 次抉择";
+  if(state.violations.length){
+    note='<div class="end-vio"><b>师德违规记录（'+state.violations.length+' 项）</b><br>'+state.violations.map(v=>"· "+VIO_TEXTS[v].clause).join("<br>")+'</div>'+note;
+  }
+  document.getElementById("end-note").innerHTML=note;
+  document.getElementById("feedback-panel").classList.remove("open");
+  switchView("view-end");
+  localStorage.removeItem(SAVE_KEY);
+}
+
+/* ---- 视图 / 存档 ---- */
+function switchView(n){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById(n).classList.add("active");window.scrollTo(0,0);switchSet(viewSet(n));}
+function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(state));}catch(e){}}
+function startGame(){
+  const ni=document.getElementById("player-name");
+  const name=(ni&&ni.value.trim())||"阿奇";
+  state={node:"week",name:name,sub:chosenSub(),week:0,attrs:{care:2,prin:2,amb:2,mind:10},steps:0,log:[],early:false,violations:[],route:"title"};
+  switchView("view-game");save();renderGame();
+}
+
+function renderRoster(sub){
+  const el=document.getElementById("notebook-roster");
+  const list=GENERIC_STUDENTS.concat(SUB_STUDENTS[sub]||[]);
+  el.innerHTML='<div class="cap" style="margin:2px 0 10px">这一学年，你遇见的 '+list.length+' 个孩子</div><div class="student-grid"></div>';
+  const grid=el.querySelector(".student-grid");
+  list.forEach(s=>{const d=document.createElement("div");d.className="student-card";
+    d.innerHTML='<div class="st-name">'+s.name+'</div><div class="st-tag">'+s.tag+'</div><div class="st-desc">'+s.desc+'</div>';
+    grid.appendChild(d);});
+}
+function switchNotebookTab(which){
+  document.getElementById("tab-btn-state").classList.toggle("active",which==="state");
+  document.getElementById("tab-btn-roster").classList.toggle("active",which==="roster");
+  document.getElementById("notebook-attrs").style.display=which==="state"?"":"none";
+  document.getElementById("notebook-roster").style.display=which==="roster"?"":"none";
+}
+function renderVioNote(){
+  const el=document.getElementById("vio-note");
+  if(state&&state.violations&&state.violations.length){
+    el.innerHTML='<div class="vio-note"><b>已触犯师德红线：</b>'+state.violations.map(v=>VIO_TEXTS[v].name).join("、")+'<br>再犯将导致：警告 → 记过 → 辞退</div>';
+    el.style.display="";
+  }else{el.style.display="none";}
+}
+
+/* ---- 事件绑定 ---- */
+document.getElementById("btn-start").addEventListener("click",()=>{ensureAudio();startGame();});
+document.getElementById("btn-music-title").addEventListener("click",toggleMusic);
+document.getElementById("btn-music-game").addEventListener("click",toggleMusic);
+document.getElementById("btn-notebook").addEventListener("click",()=>{ensureAudio();document.getElementById("notebook-panel").classList.add("open");switchNotebookTab("state");renderVioNote();renderAttrs(document.getElementById("notebook-attrs"),state.attrs);renderRoster(state.sub);});
+/* 进页面即自动开启背景音乐：首次用户交互时解锁播放（浏览器要求先有手势） */
+let _musicStarted=false;
+function _ensureMusicStart(){if(_musicStarted)return;_musicStarted=true;ensureAudio();if(!musicOn)startMusic(viewSet(activeView()));}
+/* 全局点击反馈音：按钮、科目选项、链接等可点元素统一播放 */
+document.addEventListener("pointerdown",(e)=>{_ensureMusicStart();if(e.target&&e.target.closest&&e.target.closest("button,.opt,a,[role=button]"))playClick();},{capture:true});
+document.getElementById("tab-btn-state").addEventListener("click",switchNotebookTab.bind(null,"state"));
+document.getElementById("tab-btn-roster").addEventListener("click",switchNotebookTab.bind(null,"roster"));
+document.getElementById("btn-notebook-close").addEventListener("click",()=>document.getElementById("notebook-panel").classList.remove("open"));
+document.getElementById("notebook-panel").addEventListener("click",e=>{if(e.target.id==="notebook-panel")e.currentTarget.classList.remove("open");});
+document.getElementById("btn-fb-next").addEventListener("click",()=>{if(window.__fbNext)window.__fbNext();});
+document.getElementById("btn-restart").addEventListener("click",()=>{ensureAudio();startGame();});
+document.getElementById("btn-again").addEventListener("click",()=>{ensureAudio();switchView("view-title");});
+
+/* ---- 初始化 ---- */
+reducedMotion=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+buildSubjects();updateMusicIcon();
+(function(){try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.sub&&s.week>=0&&s.week<=TOTAL_WEEKS-1){state=s;switchView("view-game");renderGame();}}catch(e){}})();
+</script>
+</body>
+</html>
